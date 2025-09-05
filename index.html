@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Auditoría - Guatemala</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -52,7 +53,7 @@
             border-radius: 15px;
             padding: 30px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
+            max-width: 500px;
             margin: 50px auto;
         }
 
@@ -217,7 +218,7 @@
 
         .file-item {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             padding: 10px;
             background: #f8f9fa;
@@ -278,6 +279,11 @@
             padding: 15px;
             border-radius: 8px;
             margin: 10px 0;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
         }
 
         .alert-success {
@@ -291,6 +297,31 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .register-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 30px auto;
+        }
     </style>
 </head>
 <body>
@@ -298,7 +329,7 @@
         <!-- Header -->
         <div class="header">
             <h1>🏢 Sistema de Auditoría</h1>
-            <p>Plataforma Integral para Auditorías en Guatemala</p>
+            <p>Plataforma Integral para Auditorías en Guatemala - Powered by Supabase</p>
         </div>
 
         <!-- Login Screen -->
@@ -306,16 +337,6 @@
             <div class="login-container">
                 <h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">Iniciar Sesión</h2>
                 
-                <div class="form-group">
-                    <label>Tipo de Usuario:</label>
-                    <select id="userType">
-                        <option value="cliente">Cliente</option>
-                        <option value="administrador">Administrador</option>
-                        <option value="auditor">Auditor</option>
-                        <option value="desarrollador">Desarrollador</option>
-                    </select>
-                </div>
-
                 <div class="form-group">
                     <label>Email:</label>
                     <input type="email" id="loginEmail" placeholder="correo@empresa.com">
@@ -326,8 +347,17 @@
                     <input type="password" id="loginPassword" placeholder="Tu contraseña">
                 </div>
 
-                <button class="btn" onclick="login()" style="width: 100%;">Iniciar Sesión</button>
+                <button class="btn" onclick="login()" style="width: 100%;">
+                    <span id="loginBtnText">Iniciar Sesión</span>
+                    <span id="loginLoader" class="loading hidden"></span>
+                </button>
                 
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn btn-success" onclick="showRegisterForm()" style="width: 100%; margin-top: 10px;">
+                        Registrar Nueva Empresa
+                    </button>
+                </div>
+
                 <div style="text-align: center; margin-top: 20px;">
                     <p style="color: #7f8c8d; font-size: 14px;">
                         Datos de prueba:<br>
@@ -336,6 +366,68 @@
                     </p>
                 </div>
             </div>
+
+            <!-- Register Form -->
+            <div id="registerForm" class="register-container hidden">
+                <h2 style="text-align: center; margin-bottom: 30px; color: #2c3e50;">Registrar Nueva Empresa</h2>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Nombre de la Empresa:</label>
+                        <input type="text" id="regEmpresa" placeholder="Mi Empresa S.A.">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Empresarial:</label>
+                        <input type="email" id="regEmpresaEmail" placeholder="contacto@empresa.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono:</label>
+                        <input type="tel" id="regTelefono" placeholder="+502 2234-5678">
+                    </div>
+                    <div class="form-group">
+                        <label>NIT:</label>
+                        <input type="text" id="regNit" placeholder="12345678-9">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Dirección:</label>
+                    <textarea id="regDireccion" rows="2" placeholder="Dirección completa"></textarea>
+                </div>
+                
+                <h3 style="margin: 20px 0; color: #2c3e50;">Datos del Administrador</h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label>Nombre Completo:</label>
+                        <input type="text" id="regNombre" placeholder="Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Personal:</label>
+                        <input type="email" id="regEmail" placeholder="juan@empresa.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono Personal:</label>
+                        <input type="tel" id="regTelPersonal" placeholder="+502 1234-5678">
+                    </div>
+                    <div class="form-group">
+                        <label>Puesto:</label>
+                        <input type="text" id="regPuesto" placeholder="Gerente General">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Contraseña:</label>
+                    <input type="password" id="regPassword" placeholder="Mínimo 6 caracteres">
+                </div>
+
+                <button class="btn btn-success" onclick="registerCompany()" style="width: 100%;">
+                    Crear Empresa y Usuario
+                </button>
+                <button class="btn" onclick="hideRegisterForm()" style="width: 100%; margin-top: 10px;">
+                    Volver al Login
+                </button>
+            </div>
         </div>
 
         <!-- Main App -->
@@ -343,6 +435,7 @@
             <!-- User Info -->
             <div class="user-info">
                 <strong>Usuario:</strong> <span id="currentUser"></span> | 
+                <strong>Empresa:</strong> <span id="currentCompany"></span> | 
                 <strong>Tipo:</strong> <span id="currentUserType"></span> | 
                 <button class="btn btn-danger" onclick="logout()">Cerrar Sesión</button>
             </div>
@@ -401,7 +494,7 @@
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
                         <button class="btn btn-success" onclick="showAddProductForm()">➕ Agregar Producto</button>
-                        <button class="btn" onclick="calculateAllVNR()">🔄 Recalcular VNR</button>
+                        <button class="btn" onclick="refreshInventory()">🔄 Actualizar Lista</button>
                     </div>
 
                     <!-- Add Product Form -->
@@ -411,6 +504,14 @@
                             <div class="form-group">
                                 <label>Nombre del Producto:</label>
                                 <input type="text" id="productName" placeholder="Ej: Laptop Dell">
+                            </div>
+                            <div class="form-group">
+                                <label>Código:</label>
+                                <input type="text" id="productCode" placeholder="SKU-001">
+                            </div>
+                            <div class="form-group">
+                                <label>Categoría:</label>
+                                <input type="text" id="productCategory" placeholder="Tecnología">
                             </div>
                             <div class="form-group">
                                 <label>Cantidad:</label>
@@ -458,12 +559,12 @@
                                 <input type="tel" id="userPhone" placeholder="+502 1234-5678">
                             </div>
                             <div class="form-group">
-                                <label>Empresa:</label>
-                                <input type="text" id="userCompany" placeholder="Empresa ABC S.A.">
-                            </div>
-                            <div class="form-group">
                                 <label>Puesto:</label>
                                 <input type="text" id="userPosition" placeholder="Contador Senior">
+                            </div>
+                            <div class="form-group">
+                                <label>Contraseña:</label>
+                                <input type="password" id="userPassword" placeholder="Contraseña temporal">
                             </div>
                             <div class="form-group">
                                 <label>Tipo de Usuario:</label>
@@ -564,92 +665,178 @@
     </div>
 
     <script>
-        // Global variables
-        let currentUser = null;
-        let currentUserType = null;
-        let inventory = [
-            {
-                id: 1,
-                name: 'Laptop Dell Inspiron',
-                quantity: 25,
-                cost: 4500.00,
-                price: 6000.00,
-                vnr: 5800.00
-            },
-            {
-                id: 2,
-                name: 'Monitor Samsung 24"',
-                quantity: 40,
-                cost: 1200.00,
-                price: 1800.00,
-                vnr: 1750.00
-            }
-        ];
-        let users = [
-            {
-                id: 1,
-                name: 'Juan Administrador',
-                email: 'admin@auditoria.gt',
-                phone: '+502 2234-5678',
-                company: 'Auditores Guatemala S.A.',
-                position: 'Administrador General',
-                type: 'administrador',
-                password: 'admin123'
-            },
-            {
-                id: 2,
-                name: 'María Auditora',
-                email: 'auditor@auditoria.gt',
-                phone: '+502 2234-5679',
-                company: 'Auditores Guatemala S.A.',
-                position: 'Auditora Senior',
-                type: 'auditor',
-                password: 'auditor123'
-            }
-        ];
-        let files = [];
-        let emails = [];
+        // Configuración de Supabase
+        const supabaseUrl = 'https://efjlcndwutychpgtxlas.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVmamxjbmR3dXR5Y2hwZ3R4bGFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxMDU0MzYsImV4cCI6MjA3MjY4MTQzNn0.dxUGpEBpyiC6I0IWAFeagvW3CC6Dv0vfD25fsMCcSqI';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Login function
-        function login() {
-            const userType = document.getElementById('userType').value;
+        // Variables globales
+        let currentUser = null;
+        let currentCompany = null;
+
+        // ======================
+        // FUNCIONES DE LOGIN
+        // ======================
+
+        async function login() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
 
-            // Simple authentication
-            const user = users.find(u => u.email === email && u.password === password && u.type === userType);
-            
-            if (user) {
-                currentUser = user;
-                currentUserType = userType;
-                
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                
-                document.getElementById('currentUser').textContent = user.name;
-                document.getElementById('currentUserType').textContent = userType.charAt(0).toUpperCase() + userType.slice(1);
-                
-                setupUserPermissions();
-                updateDashboard();
-                showAlert('Inicio de sesión exitoso', 'success');
-            } else {
-                showAlert('Credenciales incorrectas', 'error');
+            if (!email || !password) {
+                showAlert('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            showLoading('login', true);
+
+            try {
+                // Buscar usuario en la base de datos
+                const { data: users, error } = await supabase
+                    .from('usuarios')
+                    .select(`
+                        *,
+                        empresas (
+                            id,
+                            nombre,
+                            email,
+                            telefono,
+                            direccion,
+                            nit
+                        )
+                    `)
+                    .eq('email', email)
+                    .eq('password_hash', password)
+                    .eq('activo', true);
+
+                if (error) throw error;
+
+                if (users && users.length > 0) {
+                    currentUser = users[0];
+                    currentCompany = users[0].empresas;
+
+                    // Actualizar último acceso
+                    await supabase
+                        .from('usuarios')
+                        .update({ ultimo_acceso: new Date().toISOString() })
+                        .eq('id', currentUser.id);
+
+                    // Registrar actividad
+                    await registrarActividad('INICIO_SESION', 'Usuario inició sesión en el sistema');
+
+                    // Mostrar app principal
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('mainApp').classList.remove('hidden');
+                    
+                    document.getElementById('currentUser').textContent = currentUser.nombre_completo;
+                    document.getElementById('currentCompany').textContent = currentCompany.nombre;
+                    document.getElementById('currentUserType').textContent = currentUser.tipo_usuario.charAt(0).toUpperCase() + currentUser.tipo_usuario.slice(1);
+                    
+                    setupUserPermissions();
+                    await updateDashboard();
+                    showAlert('Inicio de sesión exitoso', 'success');
+                } else {
+                    showAlert('Credenciales incorrectas', 'error');
+                }
+            } catch (error) {
+                console.error('Error en login:', error);
+                showAlert('Error al iniciar sesión: ' + error.message, 'error');
+            } finally {
+                showLoading('login', false);
             }
         }
 
-        // Logout function
+        // Función para registrar nueva empresa
+        async function registerCompany() {
+            const empresaData = {
+                nombre: document.getElementById('regEmpresa').value,
+                email: document.getElementById('regEmpresaEmail').value,
+                telefono: document.getElementById('regTelefono').value,
+                direccion: document.getElementById('regDireccion').value,
+                nit: document.getElementById('regNit').value
+            };
+
+            const userData = {
+                nombre_completo: document.getElementById('regNombre').value,
+                email: document.getElementById('regEmail').value,
+                telefono: document.getElementById('regTelPersonal').value,
+                puesto: document.getElementById('regPuesto').value,
+                password_hash: document.getElementById('regPassword').value,
+                tipo_usuario: 'administrador'
+            };
+
+            // Validaciones
+            if (!empresaData.nombre || !empresaData.email || !userData.nombre_completo || !userData.email || !userData.password_hash) {
+                showAlert('Por favor completa todos los campos obligatorios', 'error');
+                return;
+            }
+
+            if (userData.password_hash.length < 6) {
+                showAlert('La contraseña debe tener al menos 6 caracteres', 'error');
+                return;
+            }
+
+            try {
+                // Insertar empresa
+                const { data: empresaResult, error: empresaError } = await supabase
+                    .from('empresas')
+                    .insert([empresaData])
+                    .select();
+
+                if (empresaError) throw empresaError;
+
+                // Insertar usuario administrador
+                userData.empresa_id = empresaResult[0].id;
+                const { data: userResult, error: userError } = await supabase
+                    .from('usuarios')
+                    .insert([userData])
+                    .select();
+
+                if (userError) throw userError;
+
+                showAlert('Empresa y usuario creados exitosamente. Ya puedes iniciar sesión.', 'success');
+                hideRegisterForm();
+                
+                // Limpiar formularios
+                document.getElementById('regEmpresa').value = '';
+                document.getElementById('regEmpresaEmail').value = '';
+                document.getElementById('regTelefono').value = '';
+                document.getElementById('regDireccion').value = '';
+                document.getElementById('regNit').value = '';
+                document.getElementById('regNombre').value = '';
+                document.getElementById('regEmail').value = '';
+                document.getElementById('regTelPersonal').value = '';
+                document.getElementById('regPuesto').value = '';
+                document.getElementById('regPassword').value = '';
+
+            } catch (error) {
+                console.error('Error al registrar empresa:', error);
+                showAlert('Error al registrar empresa: ' + error.message, 'error');
+            }
+        }
+
+        function showRegisterForm() {
+            document.getElementById('registerForm').classList.remove('hidden');
+        }
+
+        function hideRegisterForm() {
+            document.getElementById('registerForm').classList.add('hidden');
+        }
+
         function logout() {
             currentUser = null;
-            currentUserType = null;
+            currentCompany = null;
             document.getElementById('loginScreen').classList.remove('hidden');
             document.getElementById('mainApp').classList.add('hidden');
             
-            // Clear form
+            // Limpiar formularios
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
         }
 
-        // Setup user permissions
+        // ======================
+        // FUNCIONES DE PERMISOS
+        // ======================
+
         function setupUserPermissions() {
             const inventoryTab = document.getElementById('inventoryTab');
             const usersTab = document.getElementById('usersTab');
@@ -660,13 +847,16 @@
             usersTab.style.display = 'block';
             filesTab.style.display = 'block';
 
-            if (currentUserType === 'cliente') {
+            if (currentUser.tipo_usuario === 'cliente') {
                 inventoryTab.style.display = 'none';
                 usersTab.style.display = 'none';
             }
         }
 
-        // Tab navigation
+        // ======================
+        // FUNCIONES DE NAVEGACIÓN
+        // ======================
+
         function showTab(tabName) {
             // Hide all tabs
             const tabs = document.querySelectorAll('.tab-content');
@@ -686,57 +876,152 @@
             if (tabName === 'email') loadEmails();
         }
 
-        // Dashboard functions
-        function updateDashboard() {
-            document.getElementById('totalProducts').textContent = inventory.length;
-            document.getElementById('totalValue').textContent = 'Q' + inventory.reduce((sum, item) => sum + (item.cost * item.quantity), 0).toLocaleString();
-            document.getElementById('totalUsers').textContent = users.length;
-            document.getElementById('totalFiles').textContent = files.length;
-            
-            updateInventoryOverview();
-            updateRecentEmails();
+        // ======================
+        // FUNCIONES DE DASHBOARD
+        // ======================
+
+        async function updateDashboard() {
+            try {
+                // Obtener estadísticas de inventarios
+                const { data: inventarios } = await supabase
+                    .from('inventarios')
+                    .select('*')
+                    .eq('empresa_id', currentCompany.id)
+                    .eq('activo', true);
+
+                // Obtener usuarios
+                const { data: usuarios } = await supabase
+                    .from('usuarios')
+                    .select('*')
+                    .eq('empresa_id', currentCompany.id)
+                    .eq('activo', true);
+
+                // Obtener archivos
+                const { data: archivos } = await supabase
+                    .from('archivos')
+                    .select('*')
+                    .eq('empresa_id', currentCompany.id);
+
+                // Actualizar estadísticas
+                document.getElementById('totalProducts').textContent = inventarios ? inventarios.length : 0;
+                document.getElementById('totalUsers').textContent = usuarios ? usuarios.length : 0;
+                document.getElementById('totalFiles').textContent = archivos ? archivos.length : 0;
+
+                if (inventarios && inventarios.length > 0) {
+                    const totalValue = inventarios.reduce((sum, item) => sum + (parseFloat(item.costo_unitario) * item.cantidad), 0);
+                    document.getElementById('totalValue').textContent = 'Q' + totalValue.toLocaleString();
+                } else {
+                    document.getElementById('totalValue').textContent = 'Q0';
+                }
+
+                await updateInventoryOverview();
+                await updateRecentEmails();
+
+            } catch (error) {
+                console.error('Error actualizando dashboard:', error);
+            }
         }
 
-        function updateInventoryOverview() {
-            const overview = document.getElementById('inventoryOverview');
-            overview.innerHTML = inventory.map(item => `
-                <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #3498db;">
-                    <strong>${item.name}</strong><br>
-                    Cantidad: ${item.quantity} | Costo: Q${item.cost.toLocaleString()} | VNR: Q${item.vnr.toLocaleString()}
-                </div>
-            `).join('');
+        async function updateInventoryOverview() {
+            try {
+                const { data: inventarios } = await supabase
+                    .from('inventarios')
+                    .select('*')
+                    .eq('empresa_id', currentCompany.id)
+                    .eq('activo', true)
+                    .limit(5);
+
+                const overview = document.getElementById('inventoryOverview');
+                
+                if (inventarios && inventarios.length > 0) {
+                    overview.innerHTML = inventarios.map(item => `
+                        <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #3498db;">
+                            <strong>${item.nombre_producto}</strong><br>
+                            Cantidad: ${item.cantidad} | Costo: Q${parseFloat(item.costo_unitario).toLocaleString()} | VNR: Q${parseFloat(item.vnr || 0).toLocaleString()}
+                        </div>
+                    `).join('');
+                } else {
+                    overview.innerHTML = '<p>No hay productos en inventario</p>';
+                }
+            } catch (error) {
+                console.error('Error cargando overview de inventarios:', error);
+            }
         }
 
-        function updateRecentEmails() {
-            const recentEmails = document.getElementById('recentEmails');
-            const lastEmails = emails.slice(-3);
-            recentEmails.innerHTML = lastEmails.length > 0 ? lastEmails.map(email => `
-                <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px;">
-                    <strong>Para:</strong> ${email.to}<br>
-                    <strong>Asunto:</strong> ${email.subject}<br>
-                    <small>${email.date}</small>
-                </div>
-            `).join('') : '<p>No hay correos enviados recientes</p>';
+        async function updateRecentEmails() {
+            try {
+                const { data: correos } = await supabase
+                    .from('correos')
+                    .select('*')
+                    .eq('empresa_id', currentCompany.id)
+                    .order('fecha_envio', { ascending: false })
+                    .limit(3);
+
+                const recentEmails = document.getElementById('recentEmails');
+                
+                if (correos && correos.length > 0) {
+                    recentEmails.innerHTML = correos.map(email => `
+                        <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px;">
+                            <strong>Para:</strong> ${email.destinatario}<br>
+                            <strong>Asunto:</strong> ${email.asunto}<br>
+                            <small>${new Date(email.fecha_envio).toLocaleString()}</small>
+                        </div>
+                    `).join('');
+                } else {
+                    recentEmails.innerHTML = '<p>No hay correos enviados recientes</p>';
+                }
+            } catch (error) {
+                console.error('Error cargando correos recientes:', error);
+            }
         }
 
-        // Inventory functions
-        function loadInventory() {
-            updateInventoryGrid();
+        // ======================
+        // FUNCIONES DE INVENTARIO
+        // ======================
+
+        async function loadInventory() {
+            await updateInventoryGrid();
         }
 
-        function updateInventoryGrid() {
-            const grid = document.getElementById('inventoryGrid');
-            grid.innerHTML = inventory.map(item => `
-                <div class="inventory-item">
-                    <h3>${item.name}</h3>
-                    <p><strong>Cantidad:</strong> ${item.quantity}</p>
-                    <p><strong>Costo Unitario:</strong> Q${item.cost.toLocaleString()}</p>
-                    <p><strong>Precio Venta:</strong> Q${item.price.toLocaleString()}</p>
-                    <p><strong>VNR:</strong> Q${item.vnr.toLocaleString()}</p>
-                    <p><strong>Valor Total:</strong> Q${(item.cost * item.quantity).toLocaleString()}</p>
-                    <button class="btn btn-danger" onclick="removeProduct(${item.id})">🗑️ Eliminar</button>
-                </div>
-            `).join('');
+        async function refreshInventory() {
+            await updateInventoryGrid();
+            showAlert('Inventario actualizado', 'success');
+        }
+
+        async function updateInventoryGrid() {
+            try {
+                const { data: inventarios, error } = await supabase
+                    .from('inventarios')
+                    .select('*')
+                    .eq('empresa_id', currentCompany.id)
+                    .eq('activo', true)
+                    .order('fecha_actualizacion', { ascending: false });
+
+                if (error) throw error;
+
+                const grid = document.getElementById('inventoryGrid');
+                
+                if (inventarios && inventarios.length > 0) {
+                    grid.innerHTML = inventarios.map(item => `
+                        <div class="inventory-item">
+                            <h3>${item.nombre_producto}</h3>
+                            <p><strong>Código:</strong> ${item.codigo_producto || 'N/A'}</p>
+                            <p><strong>Categoría:</strong> ${item.categoria || 'N/A'}</p>
+                            <p><strong>Cantidad:</strong> ${item.cantidad}</p>
+                            <p><strong>Costo Unitario:</strong> Q${parseFloat(item.costo_unitario).toLocaleString()}</p>
+                            <p><strong>Precio Venta:</strong> Q${parseFloat(item.precio_venta).toLocaleString()}</p>
+                            <p><strong>VNR:</strong> Q${parseFloat(item.vnr || 0).toLocaleString()}</p>
+                            <p><strong>Valor Total:</strong> Q${(parseFloat(item.costo_unitario) * item.cantidad).toLocaleString()}</p>
+                            <button class="btn btn-danger" onclick="removeProduct(${item.id})">🗑️ Eliminar</button>
+                        </div>
+                    `).join('');
+                } else {
+                    grid.innerHTML = '<p>No hay productos en inventario. ¡Agrega el primero!</p>';
+                }
+            } catch (error) {
+                console.error('Error cargando inventario:', error);
+                showAlert('Error cargando inventario: ' + error.message, 'error');
+            }
         }
 
         function showAddProductForm() {
@@ -750,92 +1035,140 @@
 
         function clearProductForm() {
             document.getElementById('productName').value = '';
+            document.getElementById('productCode').value = '';
+            document.getElementById('productCategory').value = '';
             document.getElementById('productQuantity').value = '';
             document.getElementById('productCost').value = '';
             document.getElementById('productPrice').value = '';
         }
 
-        function addProduct() {
-            const name = document.getElementById('productName').value;
-            const quantity = parseInt(document.getElementById('productQuantity').value);
-            const cost = parseFloat(document.getElementById('productCost').value);
-            const price = parseFloat(document.getElementById('productPrice').value);
+        async function addProduct() {
+            const productData = {
+                empresa_id: currentCompany.id,
+                nombre_producto: document.getElementById('productName').value,
+                codigo_producto: document.getElementById('productCode').value,
+                categoria: document.getElementById('productCategory').value,
+                cantidad: parseInt(document.getElementById('productQuantity').value),
+                costo_unitario: parseFloat(document.getElementById('productCost').value),
+                precio_venta: parseFloat(document.getElementById('productPrice').value),
+                creado_por: currentUser.id
+            };
 
-            if (!name || !quantity || !cost || !price) {
-                showAlert('Por favor completa todos los campos', 'error');
+            if (!productData.nombre_producto || !productData.cantidad || !productData.costo_unitario || !productData.precio_venta) {
+                showAlert('Por favor completa todos los campos obligatorios', 'error');
                 return;
             }
 
-            const vnr = calculateVNR(cost, price);
-            const newProduct = {
-                id: inventory.length + 1,
-                name,
-                quantity,
-                cost,
-                price,
-                vnr
-            };
+            try {
+                const { data, error } = await supabase
+                    .from('inventarios')
+                    .insert([productData])
+                    .select();
 
-            inventory.push(newProduct);
-            updateInventoryGrid();
-            updateDashboard();
-            hideAddProductForm();
-            showAlert('Producto agregado exitosamente', 'success');
-        }
+                if (error) throw error;
 
-        function calculateVNR(cost, price) {
-            // VNR = Precio de venta estimado - costos de terminación y venta (estimado 3%)
-            return price * 0.97;
-        }
+                await updateInventoryGrid();
+                await updateDashboard();
+                hideAddProductForm();
+                showAlert('Producto agregado exitosamente', 'success');
 
-        function calculateAllVNR() {
-            inventory.forEach(item => {
-                item.vnr = calculateVNR(item.cost, item.price);
-            });
-            updateInventoryGrid();
-            showAlert('VNR recalculado para todos los productos', 'success');
-        }
+                // Registrar actividad
+                await registrarActividad('CREAR_PRODUCTO', `Producto creado: ${productData.nombre_producto}`);
 
-        function removeProduct(id) {
-            if (confirm('¿Estás seguro de eliminar este producto?')) {
-                inventory = inventory.filter(item => item.id !== id);
-                updateInventoryGrid();
-                updateDashboard();
-                showAlert('Producto eliminado', 'success');
+            } catch (error) {
+                console.error('Error agregando producto:', error);
+                showAlert('Error agregando producto: ' + error.message, 'error');
             }
         }
 
-        // Users functions
-        function loadUsers() {
-            updateUsersList();
+        async function removeProduct(id) {
+            if (confirm('¿Estás seguro de eliminar este producto?')) {
+                try {
+                    // Obtener datos del producto para el log
+                    const { data: producto } = await supabase
+                        .from('inventarios')
+                        .select('nombre_producto')
+                        .eq('id', id)
+                        .single();
+
+                    // Marcar como inactivo en lugar de eliminar
+                    const { error } = await supabase
+                        .from('inventarios')
+                        .update({ activo: false })
+                        .eq('id', id)
+                        .eq('empresa_id', currentCompany.id);
+
+                    if (error) throw error;
+
+                    await updateInventoryGrid();
+                    await updateDashboard();
+                    showAlert('Producto eliminado', 'success');
+
+                    // Registrar actividad
+                    if (producto) {
+                        await registrarActividad('ELIMINAR_PRODUCTO', `Producto eliminado: ${producto.nombre_producto}`);
+                    }
+
+                } catch (error) {
+                    console.error('Error eliminando producto:', error);
+                    showAlert('Error eliminando producto: ' + error.message, 'error');
+                }
+            }
         }
 
-        function updateUsersList() {
-            const usersList = document.getElementById('usersList');
-            usersList.innerHTML = `
-                <div style="margin-top: 20px;">
-                    <h3>Lista de Usuarios</h3>
-                    ${users.map(user => `
-                        <div style="background: white; padding: 20px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
-                                <div>
-                                    <strong>Nombre:</strong> ${user.name}<br>
-                                    <strong>Email:</strong> ${user.email}<br>
-                                    <strong>Teléfono:</strong> ${user.phone}
+        // ======================
+        // FUNCIONES DE USUARIOS
+        // ======================
+
+        async function loadUsers() {
+            await updateUsersList();
+        }
+
+        async function updateUsersList() {
+            try {
+                const { data: usuarios, error } = await supabase
+                    .from('usuarios')
+                    .select('*')
+                    .eq('empresa_id', currentCompany.id)
+                    .eq('activo', true)
+                    .order('fecha_creacion', { ascending: false });
+
+                if (error) throw error;
+
+                const usersList = document.getElementById('usersList');
+                
+                if (usuarios && usuarios.length > 0) {
+                    usersList.innerHTML = `
+                        <div style="margin-top: 20px;">
+                            <h3>Lista de Usuarios</h3>
+                            ${usuarios.map(user => `
+                                <div style="background: white; padding: 20px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                                        <div>
+                                            <strong>Nombre:</strong> ${user.nombre_completo}<br>
+                                            <strong>Email:</strong> ${user.email}<br>
+                                            <strong>Teléfono:</strong> ${user.telefono || 'N/A'}
+                                        </div>
+                                        <div>
+                                            <strong>Puesto:</strong> ${user.puesto || 'N/A'}<br>
+                                            <strong>Tipo:</strong> ${user.tipo_usuario}<br>
+                                            <strong>Último acceso:</strong> ${user.ultimo_acceso ? new Date(user.ultimo_acceso).toLocaleDateString() : 'Nunca'}
+                                        </div>
+                                        <div style="text-align: right;">
+                                            ${user.id !== currentUser.id ? `<button class="btn btn-danger" onclick="removeUser(${user.id})">🗑️ Eliminar</button>` : '<span style="color: #7f8c8d;">Usuario actual</span>'}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <strong>Empresa:</strong> ${user.company}<br>
-                                    <strong>Puesto:</strong> ${user.position}<br>
-                                    <strong>Tipo:</strong> ${user.type}
-                                </div>
-                                <div style="text-align: right;">
-                                    <button class="btn btn-danger" onclick="removeUser(${user.id})">🗑️ Eliminar</button>
-                                </div>
-                            </div>
+                            `).join('')}
                         </div>
-                    `).join('')}
-                </div>
-            `;
+                    `;
+                } else {
+                    usersList.innerHTML = '<p>No hay usuarios registrados</p>';
+                }
+            } catch (error) {
+                console.error('Error cargando usuarios:', error);
+                showAlert('Error cargando usuarios: ' + error.message, 'error');
+            }
         }
 
         function showAddUserForm() {
@@ -851,95 +1184,214 @@
             document.getElementById('userName').value = '';
             document.getElementById('userEmail').value = '';
             document.getElementById('userPhone').value = '';
-            document.getElementById('userCompany').value = '';
             document.getElementById('userPosition').value = '';
+            document.getElementById('userPassword').value = '';
             document.getElementById('newUserType').value = 'cliente';
         }
 
-        function addUser() {
-            const name = document.getElementById('userName').value;
-            const email = document.getElementById('userEmail').value;
-            const phone = document.getElementById('userPhone').value;
-            const company = document.getElementById('userCompany').value;
-            const position = document.getElementById('userPosition').value;
-            const type = document.getElementById('newUserType').value;
-
-            if (!name || !email || !phone || !company || !position) {
-                showAlert('Por favor completa todos los campos', 'error');
-                return;
-            }
-
-            // Check if email already exists
-            if (users.find(user => user.email === email)) {
-                showAlert('El email ya está registrado', 'error');
-                return;
-            }
-
-            const newUser = {
-                id: users.length + 1,
-                name,
-                email,
-                phone,
-                company,
-                position,
-                type,
-                password: 'temporal123' // Default password
+        async function addUser() {
+            const userData = {
+                empresa_id: currentCompany.id,
+                nombre_completo: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                telefono: document.getElementById('userPhone').value,
+                puesto: document.getElementById('userPosition').value,
+                password_hash: document.getElementById('userPassword').value,
+                tipo_usuario: document.getElementById('newUserType').value
             };
 
-            users.push(newUser);
-            updateUsersList();
-            updateDashboard();
-            hideAddUserForm();
-            showAlert(`Usuario creado exitosamente. Contraseña temporal: temporal123`, 'success');
-        }
+            if (!userData.nombre_completo || !userData.email || !userData.password_hash) {
+                showAlert('Por favor completa todos los campos obligatorios', 'error');
+                return;
+            }
 
-        function removeUser(id) {
-            if (confirm('¿Estás seguro de eliminar este usuario?')) {
-                users = users.filter(user => user.id !== id);
-                updateUsersList();
-                updateDashboard();
-                showAlert('Usuario eliminado', 'success');
+            try {
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .insert([userData])
+                    .select();
+
+                if (error) throw error;
+
+                await updateUsersList();
+                await updateDashboard();
+                hideAddUserForm();
+                showAlert('Usuario creado exitosamente', 'success');
+
+                // Registrar actividad
+                await registrarActividad('CREAR_USUARIO', `Usuario creado: ${userData.nombre_completo}`);
+
+            } catch (error) {
+                console.error('Error creando usuario:', error);
+                if (error.code === '23505') {
+                    showAlert('El email ya está registrado', 'error');
+                } else {
+                    showAlert('Error creando usuario: ' + error.message, 'error');
+                }
             }
         }
 
-        // Files functions
-        function loadFiles() {
-            updateFilesList();
+        async function removeUser(id) {
+            if (confirm('¿Estás seguro de eliminar este usuario?')) {
+                try {
+                    // Obtener datos del usuario para el log
+                    const { data: usuario } = await supabase
+                        .from('usuarios')
+                        .select('nombre_completo')
+                        .eq('id', id)
+                        .single();
+
+                    // Marcar como inactivo
+                    const { error } = await supabase
+                        .from('usuarios')
+                        .update({ activo: false })
+                        .eq('id', id)
+                        .eq('empresa_id', currentCompany.id);
+
+                    if (error) throw error;
+
+                    await updateUsersList();
+                    await updateDashboard();
+                    showAlert('Usuario eliminado', 'success');
+
+                    // Registrar actividad
+                    if (usuario) {
+                        await registrarActividad('ELIMINAR_USUARIO', `Usuario eliminado: ${usuario.nombre_completo}`);
+                    }
+
+                } catch (error) {
+                    console.error('Error eliminando usuario:', error);
+                    showAlert('Error eliminando usuario: ' + error.message, 'error');
+                }
+            }
         }
 
-        function handleFiles(fileList) {
-            Array.from(fileList).forEach(file => {
-                // Validate file type
+        // ======================
+        // FUNCIONES DE ARCHIVOS
+        // ======================
+
+        async function loadFiles() {
+            await updateFilesList();
+        }
+
+        async function handleFiles(fileList) {
+            for (const file of Array.from(fileList)) {
+                // Validar tipo de archivo
                 const allowedTypes = ['.xlsx', '.xls', '.pdf', '.png', '.jpg', '.jpeg', '.docx', '.doc'];
                 const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
                 
                 if (!allowedTypes.includes(fileExtension)) {
                     showAlert(`Tipo de archivo no permitido: ${file.name}`, 'error');
-                    return;
+                    continue;
                 }
 
-                // Validate file size (200MB = 200 * 1024 * 1024 bytes)
+                // Validar tamaño (200MB)
                 if (file.size > 200 * 1024 * 1024) {
                     showAlert(`Archivo muy grande: ${file.name} (máximo 200MB)`, 'error');
-                    return;
+                    continue;
                 }
 
-                // Simulate file upload
-                const newFile = {
-                    id: files.length + 1,
-                    name: file.name,
-                    size: formatFileSize(file.size),
-                    type: fileExtension,
-                    uploadDate: new Date().toLocaleString(),
-                    uploadedBy: currentUser.name
-                };
+                try {
+                    const fileData = {
+                        empresa_id: currentCompany.id,
+                        nombre_archivo: file.name,
+                        tipo_archivo: fileExtension,
+                        tamano_bytes: file.size,
+                        subido_por: currentUser.id,
+                        descripcion: `Archivo subido por ${currentUser.nombre_completo}`
+                    };
 
-                files.push(newFile);
-                showAlert(`Archivo subido: ${file.name}`, 'success');
-            });
+                    const { data, error } = await supabase
+                        .from('archivos')
+                        .insert([fileData])
+                        .select();
 
-            updateFilesList();
-            updateDashboard();
+                    if (error) throw error;
+
+                    showAlert(`Archivo registrado: ${file.name}`, 'success');
+
+                    // Registrar actividad
+                    await registrarActividad('SUBIR_ARCHIVO', `Archivo subido: ${file.name}`);
+
+                } catch (error) {
+                    console.error('Error registrando archivo:', error);
+                    showAlert('Error registrando archivo: ' + error.message, 'error');
+                }
+            }
+
+            await updateFilesList();
+            await updateDashboard();
+        }
+
+        async function updateFilesList() {
+            try {
+                const { data: archivos, error } = await supabase
+                    .from('archivos')
+                    .select(`
+                        *,
+                        usuarios (nombre_completo)
+                    `)
+                    .eq('empresa_id', currentCompany.id)
+                    .order('fecha_subida', { ascending: false });
+
+                if (error) throw error;
+
+                const filesList = document.getElementById('filesList');
+                
+                if (archivos && archivos.length > 0) {
+                    filesList.innerHTML = `
+                        <h3>Archivos Subidos</h3>
+                        ${archivos.map(file => `
+                            <div class="file-item">
+                                <div>
+                                    <strong>${file.nombre_archivo}</strong><br>
+                                    <small>Tamaño: ${formatFileSize(file.tamano_bytes)} | Subido: ${new Date(file.fecha_subida).toLocaleString()} | Por: ${file.usuarios?.nombre_completo || 'Usuario eliminado'}</small>
+                                </div>
+                                <button class="btn btn-danger" onclick="removeFile(${file.id})">🗑️</button>
+                            </div>
+                        `).join('')}
+                    `;
+                } else {
+                    filesList.innerHTML = '<p>No hay archivos subidos</p>';
+                }
+            } catch (error) {
+                console.error('Error cargando archivos:', error);
+                showAlert('Error cargando archivos: ' + error.message, 'error');
+            }
+        }
+
+        async function removeFile(id) {
+            if (confirm('¿Estás seguro de eliminar este archivo?')) {
+                try {
+                    // Obtener datos del archivo para el log
+                    const { data: archivo } = await supabase
+                        .from('archivos')
+                        .select('nombre_archivo')
+                        .eq('id', id)
+                        .single();
+
+                    const { error } = await supabase
+                        .from('archivos')
+                        .delete()
+                        .eq('id', id)
+                        .eq('empresa_id', currentCompany.id);
+
+                    if (error) throw error;
+
+                    await updateFilesList();
+                    await updateDashboard();
+                    showAlert('Archivo eliminado', 'success');
+
+                    // Registrar actividad
+                    if (archivo) {
+                        await registrarActividad('ELIMINAR_ARCHIVO', `Archivo eliminado: ${archivo.nombre_archivo}`);
+                    }
+
+                } catch (error) {
+                    console.error('Error eliminando archivo:', error);
+                    showAlert('Error eliminando archivo: ' + error.message, 'error');
+                }
+            }
         }
 
         function formatFileSize(bytes) {
@@ -950,266 +1402,377 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        function updateFilesList() {
-            const filesList = document.getElementById('filesList');
-            filesList.innerHTML = files.length > 0 ? `
-                <h3>Archivos Subidos</h3>
-                ${files.map(file => `
-                    <div class="file-item">
-                        <div>
-                            <strong>${file.name}</strong><br>
-                            <small>Tamaño: ${file.size} | Subido: ${file.uploadDate} | Por: ${file.uploadedBy}</small>
-                        </div>
-                        <button class="btn btn-danger" onclick="removeFile(${file.id})">🗑️</button>
-                    </div>
-                `).join('')}
-            ` : '<p>No hay archivos subidos</p>';
+        // ======================
+        // FUNCIONES DE CORREOS
+        // ======================
+
+        async function loadEmails() {
+            await updateEmailHistory();
         }
 
-        function removeFile(id) {
-            if (confirm('¿Estás seguro de eliminar este archivo?')) {
-                files = files.filter(file => file.id !== id);
-                updateFilesList();
-                updateDashboard();
-                showAlert('Archivo eliminado', 'success');
-            }
-        }
+        async function sendEmail() {
+            const emailData = {
+                empresa_id: currentCompany.id,
+                enviado_por: currentUser.id,
+                destinatario: document.getElementById('emailTo').value,
+                asunto: document.getElementById('emailSubject').value,
+                mensaje: document.getElementById('emailMessage').value
+            };
 
-        // Email functions
-        function loadEmails() {
-            updateEmailHistory();
-        }
-
-        function sendEmail() {
-            const to = document.getElementById('emailTo').value;
-            const subject = document.getElementById('emailSubject').value;
-            const message = document.getElementById('emailMessage').value;
-
-            if (!to || !subject || !message) {
+            if (!emailData.destinatario || !emailData.asunto || !emailData.mensaje) {
                 showAlert('Por favor completa todos los campos del correo', 'error');
                 return;
             }
 
-            const newEmail = {
-                id: emails.length + 1,
-                to,
-                subject,
-                message,
-                from: currentUser.email,
-                date: new Date().toLocaleString(),
-                status: 'Enviado'
-            };
+            try {
+                const { data, error } = await supabase
+                    .from('correos')
+                    .insert([emailData])
+                    .select();
 
-            emails.push(newEmail);
-            
-            // Clear form
-            document.getElementById('emailTo').value = '';
-            document.getElementById('emailSubject').value = '';
-            document.getElementById('emailMessage').value = '';
+                if (error) throw error;
 
-            updateEmailHistory();
-            updateDashboard();
-            showAlert('Correo enviado exitosamente', 'success');
+                // Limpiar formulario
+                document.getElementById('emailTo').value = '';
+                document.getElementById('emailSubject').value = '';
+                document.getElementById('emailMessage').value = '';
+
+                await updateEmailHistory();
+                await updateDashboard();
+                showAlert('Correo registrado exitosamente', 'success');
+
+                // Registrar actividad
+                await registrarActividad('ENVIAR_CORREO', `Correo enviado a: ${emailData.destinatario}`);
+
+            } catch (error) {
+                console.error('Error registrando correo:', error);
+                showAlert('Error registrando correo: ' + error.message, 'error');
+            }
         }
 
-        function updateEmailHistory() {
-            const emailHistory = document.getElementById('emailHistory');
-            emailHistory.innerHTML = emails.length > 0 ? emails.map(email => `
-                <div class="email-item">
-                    <strong>Para:</strong> ${email.to}<br>
-                    <strong>Asunto:</strong> ${email.subject}<br>
-                    <strong>Fecha:</strong> ${email.date}<br>
-                    <strong>Estado:</strong> ${email.status}<br>
-                    <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
-                        ${email.message}
+        async function updateEmailHistory() {
+            try {
+                const { data: correos, error } = await supabase
+                    .from('correos')
+                    .select(`
+                        *,
+                        usuarios (nombre_completo)
+                    `)
+                    .eq('empresa_id', currentCompany.id)
+                    .order('fecha_envio', { ascending: false });
+
+                if (error) throw error;
+
+                const emailHistory = document.getElementById('emailHistory');
+                
+                if (correos && correos.length > 0) {
+                    emailHistory.innerHTML = correos.map(email => `
+                        <div class="email-item">
+                            <strong>Para:</strong> ${email.destinatario}<br>
+                            <strong>Asunto:</strong> ${email.asunto}<br>
+                            <strong>De:</strong> ${email.usuarios?.nombre_completo || 'Usuario eliminado'}<br>
+                            <strong>Fecha:</strong> ${new Date(email.fecha_envio).toLocaleString()}<br>
+                            <strong>Estado:</strong> ${email.estado}<br>
+                            <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 5px;">
+                                ${email.mensaje}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    emailHistory.innerHTML = '<p>No hay correos enviados</p>';
+                }
+            } catch (error) {
+                console.error('Error cargando historial de correos:', error);
+                showAlert('Error cargando historial de correos: ' + error.message, 'error');
+            }
+        }
+
+        // ======================
+        // FUNCIONES DE REPORTES
+        // ======================
+
+        async function generateInventoryReport() {
+            try {
+                const { data: inventarios, error } = await supabase
+                    .from('inventarios')
+                    .select('*')
+                    .eq('empresa_id', currentCompany.id)
+                    .eq('activo', true);
+
+                if (error) throw error;
+
+                const totalValue = inventarios.reduce((sum, item) => sum + (parseFloat(item.costo_unitario) * item.cantidad), 0);
+                const totalVNR = inventarios.reduce((sum, item) => sum + (parseFloat(item.vnr || 0) * item.cantidad), 0);
+
+                const reportContent = `
+                    <div style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px;">
+                        <h2>📦 Reporte de Inventarios</h2>
+                        <p><strong>Empresa:</strong> ${currentCompany.nombre}</p>
+                        <p><strong>Fecha de generación:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>Generado por:</strong> ${currentUser.nombre_completo}</p>
+                        
+                        <h3>Resumen Ejecutivo</h3>
+                        <ul>
+                            <li>Total de productos: ${inventarios.length}</li>
+                            <li>Valor total del inventario: Q${totalValue.toLocaleString()}</li>
+                            <li>VNR total: Q${totalVNR.toLocaleString()}</li>
+                        </ul>
+                        
+                        <h3>Detalle por Producto</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                            <tr style="background: #f8f9fa; font-weight: bold;">
+                                <td style="padding: 10px; border: 1px solid #ddd;">Producto</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Código</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Cantidad</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Costo Unit.</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Precio Venta</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">VNR</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Valor Total</td>
+                            </tr>
+                            ${inventarios.map(item => `
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${item.nombre_producto}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${item.codigo_producto || 'N/A'}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${item.cantidad}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">Q${parseFloat(item.costo_unitario).toLocaleString()}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">Q${parseFloat(item.precio_venta).toLocaleString()}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">Q${parseFloat(item.vnr || 0).toLocaleString()}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">Q${(parseFloat(item.costo_unitario) * item.cantidad).toLocaleString()}</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                        
+                        <button class="btn" onclick="downloadReport('inventario')">📥 Descargar PDF</button>
                     </div>
-                </div>
-            `).join('') : '<p>No hay correos enviados</p>';
+                `;
+                document.getElementById('reportContent').innerHTML = reportContent;
+
+                // Registrar actividad
+                await registrarActividad('GENERAR_REPORTE', 'Reporte de inventarios generado');
+
+            } catch (error) {
+                console.error('Error generando reporte:', error);
+                showAlert('Error generando reporte: ' + error.message, 'error');
+            }
         }
 
-        // Reports functions
-        function generateInventoryReport() {
-            const reportContent = `
-                <div style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px;">
-                    <h2>📦 Reporte de Inventarios</h2>
-                    <p><strong>Fecha de generación:</strong> ${new Date().toLocaleString()}</p>
-                    <p><strong>Generado por:</strong> ${currentUser.name}</p>
-                    
-                    <h3>Resumen Ejecutivo</h3>
-                    <ul>
-                        <li>Total de productos: ${inventory.length}</li>
-                        <li>Valor total del inventario: Q${inventory.reduce((sum, item) => sum + (item.cost * item.quantity), 0).toLocaleString()}</li>
-                        <li>VNR total: Q${inventory.reduce((sum, item) => sum + (item.vnr * item.quantity), 0).toLocaleString()}</li>
-                    </ul>
-                    
-                    <h3>Detalle por Producto</h3>
-                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-                        <tr style="background: #f8f9fa; font-weight: bold;">
-                            <td style="padding: 10px; border: 1px solid #ddd;">Producto</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">Cantidad</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">Costo Unit.</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">Precio Venta</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">VNR</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">Valor Total</td>
-                        </tr>
-                        ${inventory.map(item => `
-                            <tr>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${item.name}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${item.quantity}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">Q${item.cost.toLocaleString()}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">Q${item.price.toLocaleString()}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">Q${item.vnr.toLocaleString()}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">Q${(item.cost * item.quantity).toLocaleString()}</td>
+        async function generateUsersReport() {
+            try {
+                const { data: usuarios, error } = await supabase
+                    .from('usuarios')
+                    .select('*')
+                    .eq('empresa_id', currentCompany.id)
+                    .eq('activo', true);
+
+                if (error) throw error;
+
+                const reportContent = `
+                    <div style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px;">
+                        <h2>👥 Reporte de Usuarios</h2>
+                        <p><strong>Empresa:</strong> ${currentCompany.nombre}</p>
+                        <p><strong>Fecha de generación:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>Generado por:</strong> ${currentUser.nombre_completo}</p>
+                        
+                        <h3>Resumen</h3>
+                        <ul>
+                            <li>Total de usuarios: ${usuarios.length}</li>
+                            <li>Administradores: ${usuarios.filter(u => u.tipo_usuario === 'administrador').length}</li>
+                            <li>Auditores: ${usuarios.filter(u => u.tipo_usuario === 'auditor').length}</li>
+                            <li>Clientes: ${usuarios.filter(u => u.tipo_usuario === 'cliente').length}</li>
+                        </ul>
+                        
+                        <h3>Lista Detallada</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                            <tr style="background: #f8f9fa; font-weight: bold;">
+                                <td style="padding: 10px; border: 1px solid #ddd;">Nombre</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Email</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Puesto</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Tipo</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Último Acceso</td>
                             </tr>
-                        `).join('')}
-                    </table>
-                    
-                    <button class="btn" onclick="downloadReport('inventario')">📥 Descargar PDF</button>
-                </div>
-            `;
-            document.getElementById('reportContent').innerHTML = reportContent;
+                            ${usuarios.map(user => `
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${user.nombre_completo}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${user.email}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${user.puesto || 'N/A'}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${user.tipo_usuario}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${user.ultimo_acceso ? new Date(user.ultimo_acceso).toLocaleString() : 'Nunca'}</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                        
+                        <button class="btn" onclick="downloadReport('usuarios')">📥 Descargar PDF</button>
+                    </div>
+                `;
+                document.getElementById('reportContent').innerHTML = reportContent;
+
+                // Registrar actividad
+                await registrarActividad('GENERAR_REPORTE', 'Reporte de usuarios generado');
+
+            } catch (error) {
+                console.error('Error generando reporte:', error);
+                showAlert('Error generando reporte: ' + error.message, 'error');
+            }
         }
 
-        function generateUsersReport() {
-            const reportContent = `
-                <div style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px;">
-                    <h2>👥 Reporte de Usuarios</h2>
-                    <p><strong>Fecha de generación:</strong> ${new Date().toLocaleString()}</p>
-                    <p><strong>Generado por:</strong> ${currentUser.name}</p>
-                    
-                    <h3>Resumen</h3>
-                    <ul>
-                        <li>Total de usuarios: ${users.length}</li>
-                        <li>Administradores: ${users.filter(u => u.type === 'administrador').length}</li>
-                        <li>Auditores: ${users.filter(u => u.type === 'auditor').length}</li>
-                        <li>Clientes: ${users.filter(u => u.type === 'cliente').length}</li>
-                    </ul>
-                    
-                    <h3>Lista Detallada</h3>
-                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-                        <tr style="background: #f8f9fa; font-weight: bold;">
-                            <td style="padding: 10px; border: 1px solid #ddd;">Nombre</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">Email</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">Empresa</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">Puesto</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">Tipo</td>
-                        </tr>
-                        ${users.map(user => `
-                            <tr>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${user.name}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${user.email}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${user.company}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${user.position}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${user.type}</td>
-                            </tr>
-                        `).join('')}
-                    </table>
-                    
-                    <button class="btn" onclick="downloadReport('usuarios')">📥 Descargar PDF</button>
-                </div>
-            `;
-            document.getElementById('reportContent').innerHTML = reportContent;
-        }
+        async function generateActivityReport() {
+            try {
+                const { data: actividades, error } = await supabase
+                    .from('actividades')
+                    .select(`
+                        *,
+                        usuarios (nombre_completo)
+                    `)
+                    .eq('empresa_id', currentCompany.id)
+                    .order('fecha_actividad', { ascending: false })
+                    .limit(50);
 
-        function generateActivityReport() {
-            const activities = [
-                { action: 'Inicio de sesión', user: currentUser.name, date: new Date().toLocaleString() },
-                { action: 'Consulta de inventarios', user: currentUser.name, date: new Date().toLocaleString() },
-                { action: 'Generación de reporte', user: currentUser.name, date: new Date().toLocaleString() }
-            ];
+                if (error) throw error;
 
-            const reportContent = `
-                <div style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px;">
-                    <h2>📈 Reporte de Actividad</h2>
-                    <p><strong>Fecha de generación:</strong> ${new Date().toLocaleString()}</p>
-                    <p><strong>Generado por:</strong> ${currentUser.name}</p>
-                    
-                    <h3>Actividades Recientes</h3>
-                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-                        <tr style="background: #f8f9fa; font-weight: bold;">
-                            <td style="padding: 10px; border: 1px solid #ddd;">Acción</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">Usuario</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">Fecha</td>
-                        </tr>
-                        ${activities.map(activity => `
-                            <tr>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${activity.action}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${activity.user}</td>
-                                <td style="padding: 10px; border: 1px solid #ddd;">${activity.date}</td>
+                const reportContent = `
+                    <div style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px;">
+                        <h2>📈 Reporte de Actividad</h2>
+                        <p><strong>Empresa:</strong> ${currentCompany.nombre}</p>
+                        <p><strong>Fecha de generación:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>Generado por:</strong> ${currentUser.nombre_completo}</p>
+                        
+                        <h3>Actividades Recientes (Últimas 50)</h3>
+                        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                            <tr style="background: #f8f9fa; font-weight: bold;">
+                                <td style="padding: 10px; border: 1px solid #ddd;">Fecha</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Usuario</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Acción</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">Detalle</td>
                             </tr>
-                        `).join('')}
-                    </table>
-                    
-                    <button class="btn" onclick="downloadReport('actividad')">📥 Descargar PDF</button>
-                </div>
-            `;
-            document.getElementById('reportContent').innerHTML = reportContent;
+                            ${actividades.map(activity => `
+                                <tr>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${new Date(activity.fecha_actividad).toLocaleString()}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${activity.usuarios?.nombre_completo || 'Usuario eliminado'}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${activity.accion}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${activity.detalle || 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                        
+                        <button class="btn" onclick="downloadReport('actividad')">📥 Descargar PDF</button>
+                    </div>
+                `;
+                document.getElementById('reportContent').innerHTML = reportContent;
+
+                // Registrar actividad
+                await registrarActividad('GENERAR_REPORTE', 'Reporte de actividad generado');
+
+            } catch (error) {
+                console.error('Error generando reporte:', error);
+                showAlert('Error generando reporte: ' + error.message, 'error');
+            }
         }
 
         function downloadReport(type) {
-            showAlert(`Descargando reporte de ${type}...`, 'success');
+            showAlert(`Simulando descarga de reporte de ${type}...`, 'success');
             // En una implementación real, aquí se generaría y descargaría el PDF
         }
 
-        // Utility functions
+        // ======================
+        // FUNCIONES AUXILIARES
+        // ======================
+
+        async function registrarActividad(accion, detalle) {
+            try {
+                await supabase
+                    .from('actividades')
+                    .insert([{
+                        empresa_id: currentCompany.id,
+                        usuario_id: currentUser.id,
+                        accion: accion,
+                        detalle: detalle
+                    }]);
+            } catch (error) {
+                console.error('Error registrando actividad:', error);
+            }
+        }
+
+        function showLoading(elementPrefix, show) {
+            const textElement = document.getElementById(`${elementPrefix}BtnText`);
+            const loaderElement = document.getElementById(`${elementPrefix}Loader`);
+            
+            if (textElement && loaderElement) {
+                if (show) {
+                    textElement.style.display = 'none';
+                    loaderElement.classList.remove('hidden');
+                } else {
+                    textElement.style.display = 'inline';
+                    loaderElement.classList.add('hidden');
+                }
+            }
+        }
+
         function showAlert(message, type) {
+            // Remover alertas anteriores
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+
             const alertDiv = document.createElement('div');
             alertDiv.className = `alert alert-${type}`;
             alertDiv.textContent = message;
-            alertDiv.style.position = 'fixed';
-            alertDiv.style.top = '20px';
-            alertDiv.style.right = '20px';
-            alertDiv.style.zIndex = '9999';
-            alertDiv.style.minWidth = '300px';
             
             document.body.appendChild(alertDiv);
             
             setTimeout(() => {
                 alertDiv.remove();
-            }, 3000);
+            }, 4000);
         }
 
-        // Drag and drop functionality
+        // ======================
+        // DRAG AND DROP
+        // ======================
+
         document.addEventListener('DOMContentLoaded', function() {
             const fileUpload = document.querySelector('.file-upload');
             
-            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-                fileUpload.addEventListener(eventName, preventDefaults, false);
-            });
-            
-            function preventDefaults(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-            
-            ['dragenter', 'dragover'].forEach(eventName => {
-                fileUpload.addEventListener(eventName, highlight, false);
-            });
-            
-            ['dragleave', 'drop'].forEach(eventName => {
-                fileUpload.addEventListener(eventName, unhighlight, false);
-            });
-            
-            function highlight(e) {
-                fileUpload.style.background = 'rgba(52, 152, 219, 0.1)';
-            }
-            
-            function unhighlight(e) {
-                fileUpload.style.background = '';
-            }
-            
-            fileUpload.addEventListener('drop', handleDrop, false);
-            
-            function handleDrop(e) {
-                const dt = e.dataTransfer;
-                const files = dt.files;
-                handleFiles(files);
+            if (fileUpload) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    fileUpload.addEventListener(eventName, preventDefaults, false);
+                });
+                
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    fileUpload.addEventListener(eventName, highlight, false);
+                });
+                
+                ['dragleave', 'drop'].forEach(eventName => {
+                    fileUpload.addEventListener(eventName, unhighlight, false);
+                });
+                
+                function highlight(e) {
+                    fileUpload.style.background = 'rgba(52, 152, 219, 0.1)';
+                }
+                
+                function unhighlight(e) {
+                    fileUpload.style.background = '';
+                }
+                
+                fileUpload.addEventListener('drop', handleDrop, false);
+                
+                function handleDrop(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    handleFiles(files);
+                }
             }
         });
 
-        // Initialize dashboard on load
+        // ======================
+        // INICIALIZACIÓN
+        // ======================
+
         document.addEventListener('DOMContentLoaded', function() {
-            updateDashboard();
+            console.log('Sistema de Auditoría Guatemala - Conectado a Supabase');
+            console.log('Versión: 2.0 - Base de datos real');
         });
     </script>
 </body>
