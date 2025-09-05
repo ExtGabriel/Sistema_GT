@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Auditoría - Guatemala</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-success { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
+        .btn-warning { background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); color: #000; }
+        .btn-danger { background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); }
+
+        .status-box {
+            background: rgba(40, 167, 69, 0.1);
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .status-box h3 {
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-success { background: rgba(40,167,69,0.1); border-color: #28a745; color: #155724; }
+        .alert-error { background: rgba(220,53,69,0.1); border-color: #dc3545; color: #721c24; }
+        .alert-info { background: rgba(23,162,184,0.1); border-color: #17a2b8; color: #0c5460; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .grid { grid-template-columns: 1fr; }
+            .container { padding: 20px; margin: 10px; }
+        }
+
+        .hidden { display: none; }
+        
+        .history-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🇬🇹 Sistema de Auditoría</h1>
+        <p class="subtitle">Guatemala - Correos con EmailJS</p>
+
+        <!-- Estado de EmailJS -->
+        <div class="status-box" id="statusBox">
+            <h3 id="statusTitle">🔄 Verificando EmailJS...</h3>
+            <p id="statusMessage">Iniciando sistema...</p>
+            <div id="statusButtons" class="hidden">
+                <button class="btn btn-success" onclick="testEmail()">🧪 Enviar Prueba</button>
+                <button class="btn btn-warning" onclick="retryEmailJS()">🔄 Reintentar</button>
+                <button class="btn" onclick="diagnoseEmailJS()" style="background: #17a2b8;">🔍 Diagnóstico</button>
+                <button class="btn btn-danger" onclick="forceTestEmail()">⚡ Prueba Forzada</button>
+            </div>
+        </div>
+
+        <!-- Formulario de correos -->
+        <div id="emailForm" class="hidden">
+            <h3>📧 Enviar Correo</h3>
+            <form onsubmit="sendEmail(event)">
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Para:</label>
+                        <input type="email" id="emailTo" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Asunto:</label>
+                        <input type="text" id="emailSubject" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Mensaje:</label>
+                    <textarea id="emailMessage" rows="6" required></textarea>
+                </div>
+                <button type="submit" class="btn">📧 Enviar Correo</button>
+            </form>
+
+            <!-- Plantillas -->
+            <div style="margin-top: 30px;">
+                <h4>📋 Plantillas Rápidas:</h4>
+                <button class="btn btn-warning" onclick="loadTemplate('audit')">Solicitud Auditoría</button>
+                <button class="btn btn-warning" onclick="loadTemplate('report')">Reporte</button>
+                <button class="btn btn-warning" onclick="loadTemplate('reminder')">Recordatorio</button>
+            </div>
+        </div>
+
+        <!-- Historial -->
+        <div id="historySection" class="hidden">
+            <h3>📬 Historial de Correos</h3>
+            <div id="emailHistory">
+                <p>No hay correos enviados</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    
+    <script>
+        // Estado global simple
+        let emailHistory = [];
+        let emailjsReady = false;
+
+        // Configuración EmailJS
+        const CONFIG = {
+            publicKey: 'oRv0UzebO2bmLUcBi',
+            serviceId: 'service_b3bbf3j',
+            templateId: 'template_48fcljb'
+        };
+
+        // Verificar si EmailJS está disponible
+        function checkEmailJSAvailability() {
+            try {
+                // Verificar múltiples formas
+                const emailjsObj = window.emailjs || window.EmailJS || emailjs;
+                
+                if (emailjsObj && typeof emailjsObj.send === 'function') {
+                    console.log('✅ EmailJS encontrado!');
+                    
+                    // Intentar inicializar
+                    emailjsObj.init(CONFIG.publicKey);
+                    emailjsReady = true;
+                    
+                    updateStatus('success', '🎉 EmailJS Configurado y Listo', 
+                        '✅ Public Key: ' + CONFIG.publicKey + '\n✅ Listo para enviar correos directamente');
+                    
+                    document.getElementById('emailForm').classList.remove('hidden');
+                    document.getElementById('historySection').classList.remove('hidden');
+                    
+                    // Asignar objeto global para usar en las funciones de envío
+                    window.emailjsInstance = emailjsObj;
+                    
+                    return true;
+                }
+            } catch (error) {
+                console.error('❌ Error inicializando EmailJS:', error);
+            }
+            
+            return false;
+        }
+
+        // Inicializar EmailJS con múltiples intentos
+        function initEmailJS() {
+            console.log('🔄 Inicializando EmailJS...');
+            
+            // Intento 1: Verificar disponibilidad inmediata
+            if (checkEmailJSAvailability()) {
+                return;
+            }
+            
+            // Intento 2: Esperar 2 segundos
+            setTimeout(() => {
+                console.log('🔄 Segundo intento...');
+                if (checkEmailJSAvailability()) {
+                    return;
+                }
+                
+                // Intento 3: Esperar 5 segundos más
+                setTimeout(() => {
+                    console.log('🔄 Tercer intento...');
+                    if (checkEmailJSAvailability()) {
+                        return;
+                    }
+                    
+                    // Si nada funciona, usar respaldo
+                    console.log('⚠️ EmailJS no disponible, activando respaldo');
+                    activateBackupMode();
+                    
+                }, 3000);
+            }, 2000);
+        }
+
+        // Activar modo respaldo
+        function activateBackupMode() {
+            emailjsReady = false;
+            updateStatus('error', '⚠️ EmailJS No Disponible', 
+                'Usando cliente local como respaldo (Gmail, Outlook, etc.)\n\nPuedes enviar correos pero se abrirá tu cliente de correo.');
+            
+            document.getElementById('emailForm').classList.remove('hidden');
+            document.getElementById('historySection').classList.remove('hidden');
+        }
+
+        // Función auxiliar para mostrar estado de carga
+        function updateStatus(type, title, message) {
+            const statusBox = document.getElementById('statusBox');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusMessage = document.getElementById('statusMessage');
+            const statusButtons = document.getElementById('statusButtons');
+
+            statusTitle.textContent = title;
+            statusMessage.textContent = message;
+
+            if (type === 'success') {
+                statusBox.style.background = 'rgba(40, 167, 69, 0.1)';
+                statusBox.style.borderColor = '#28a745';
+                statusButtons.classList.remove('hidden');
+            } else if (type === 'error') {
+                statusBox.style.background = 'rgba(255, 193, 7, 0.1)';
+                statusBox.style.borderColor = '#ffc107';
+                statusButtons.classList.remove('hidden');
+            } else if (type === 'loading') {
+                statusBox.style.background = 'rgba(23, 162, 184, 0.1)';
+                statusBox.style.borderColor = '#17a2b8';
+                statusButtons.classList.add('hidden');
+            }
+        }
+
+        // Enviar email de prueba
+        async function testEmail() {
+            const testEmail = prompt('📧 ¿A qué email enviar la prueba?', 'tu-email@gmail.com');
+            if (!testEmail) return;
+
+            showAlert('info', '🔄 Enviando correo de prueba...');
+
+            if (emailjsReady && window.emailjsInstance) {
+                try {
+                    // Usar la instancia verificada de EmailJS
+                    const emailjsObj = window.emailjsInstance;
+                    
+                    // Parámetros básicos que funcionan con cualquier plantilla
+                    const templateParams = {
+                        to_name: testEmail.split('@')[0],
+                        from_name: 'Sistema Auditoría Guatemala',
+                        to_email: testEmail,
+                        from_email: 'sistema@auditoria.gt',
+                        subject: '🧪 Prueba EmailJS - ¡FUNCIONA!',
+                        message: `¡Felicidades! 
+
+Tu configuración de EmailJS está funcionando correctamente.
+
+✅ Credenciales válidas
+✅ Servicio conectado
+✅ Plantilla operativa
+✅ Sistema listo
+
+Ya puedes enviar correos directamente desde la aplicación.
+
+Saludos,
+Sistema de Auditoría Guatemala 🇬🇹`,
+                        reply_to: 'sistema@auditoria.gt'
+                    };
+
+                    console.log('📤 Enviando con parámetros:', templateParams);
+                    console.log('🔧 Config:', CONFIG);
+
+                    // Enviar usando la instancia verificada
+                    const result = await emailjsObj.send(CONFIG.serviceId, CONFIG.templateId, templateParams);
+
+                    console.log('📧 Resultado:', result);
+
+                    if (result.status === 200) {
+                        addToHistory(testEmail, '🧪 Prueba EmailJS', 'EmailJS');
+                        showAlert('success', `🎉 ¡CORREO ENVIADO EXITOSAMENTE!
+
+✅ Destinatario: ${testEmail}
+✅ Método: EmailJS directo
+✅ Estado: Enviado
+
+Revisa tu bandeja de entrada en 1-2 minutos.`);
+                    } else {
+                        throw new Error(`Status: ${result.status}`);
+                    }
+                } catch (error) {
+                    console.error('❌ Error EmailJS:', error);
+                    
+                    // Mostrar error específico y usar respaldo
+                    let errorMsg = 'Error con EmailJS: ';
+                    if (error.text) {
+                        errorMsg += error.text;
+                    } else {
+                        errorMsg += error.message || 'Error desconocido';
+                    }
+                    
+                    showAlert('error', '❌ ' + errorMsg + ' - Usando cliente local como respaldo...');
+                    
+                    // Respaldo con cliente local
+                    sendLocalEmail(testEmail, '🧪 Prueba Sistema (Respaldo)', 
+                        'Prueba del sistema usando cliente local como respaldo.\n\nEmailJS presentó problemas, pero el sistema funciona correctamente con tu cliente de correo.');
+                }
+            } else {
+                console.log('🔄 EmailJS no disponible, usando cliente local...');
+                sendLocalEmail(testEmail, '🧪 Prueba Sistema', 
+                    'EmailJS no está disponible, pero el sistema funciona correctamente usando tu cliente de correo local.');
+            }
+        }
+
+        // Enviar correo normal
+        async function sendEmail(event) {
+            event.preventDefault();
+            
+            const to = document.getElementById('emailTo').value;
+            const subject = document.getElementById('emailSubject').value;
+            const message = document.getElementById('emailMessage').value;
+
+            showAlert('info', '📤 Enviando correo...');
+
+            if (emailjsReady && window.emailjsInstance) {
+                try {
+                    const emailjsObj = window.emailjsInstance;
+                    
+                    const templateParams = {
+                        to_name: to.split('@')[0],
+                        from_name: 'Sistema Auditoría Guatemala',
+                        to_email: to,
+                        from_email: 'sistema@auditoria.gt',
+                        subject: subject,
+                        message: message,
+                        reply_to: 'sistema@auditoria.gt'
+                    };
+
+                    console.log('📤 Enviando correo normal:', templateParams);
+
+                    const result = await emailjsObj.send(CONFIG.serviceId, CONFIG.templateId, templateParams);
+
+                    if (result.status === 200) {
+                        addToHistory(to, subject, 'EmailJS');
+                        showAlert('success', `✅ Correo enviado exitosamente a ${to} via EmailJS`);
+                        event.target.reset();
+                    } else {
+                        throw new Error(`Status: ${result.status}`);
+                    }
+                } catch (error) {
+                    console.error('❌ Error:', error);
+                    showAlert('error', '❌ Error con EmailJS, usando cliente local...');
+                    sendLocalEmail(to, subject, message);
+                    event.target.reset();
+                }
+            } else {
+                sendLocalEmail(to, subject, message);
+                event.target.reset();
+            }
+        }
+
+        // Enviar con cliente local
+        function sendLocalEmail(to, subject, body) {
+            const mailtoLink = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.open(mailtoLink);
+            
+            addToHistory(to, subject, 'Cliente Local');
+            showAlert('success', `📧 Cliente de correo abierto para ${to}`);
+        }
+
+        // Cargar plantillas
+        function loadTemplate(type) {
+            const templates = {
+                audit: {
+                    subject: 'Solicitud de Auditoría - Guatemala 2025',
+                    message: `Estimado/a,
+
+Solicito cotización para auditoría de inventarios.
+
+DETALLES:
+• Empresa: [Nombre]
+• Ubicación: Guatemala
+• Período: 2025
+• Servicios: Auditoría + VNR
+
+Gracias por su atención.
+
+Saludos,
+Sistema de Auditoría Guatemala 🇬🇹`
+                },
+                report: {
+                    subject: 'Reporte de Inventario - ' + new Date().toLocaleDateString(),
+                    message: `Estimado/a,
+
+Adjunto reporte de inventario actualizado.
+
+RESUMEN:
+• Fecha: ${new Date().toLocaleDateString()}
+• Total productos: [Cantidad]
+• Valor total: Q. [Monto]
+
+Saludos,
+Departamento de Auditoría 🇬🇹`
+                },
+                reminder: {
+                    subject: 'Recordatorio - Auditoría Programada',
+                    message: `Estimado/a,
+
+Recordatorio de auditoría programada:
+
+DETALLES:
+• Fecha: [Completar]
+• Hora: [Completar]
+• Lugar: [Completar]
+
+Confirme su asistencia.
+
+Saludos,
+Sistema de Auditoría Guatemala 🇬🇹`
+                }
+            };
+
+            const template = templates[type];
+            document.getElementById('emailSubject').value = template.subject;
+            document.getElementById('emailMessage').value = template.message;
+            showAlert('info', `📧 Plantilla "${type}" cargada`);
+        }
+
+        // Diagnóstico completo paso a paso
+        function diagnoseEmailJS() {
+            console.log('🔍 INICIANDO DIAGNÓSTICO PASO A PASO...');
+            
+            let diagnosticSteps = [];
+            
+            // Paso 1: Verificar carga de EmailJS
+            console.log('Paso 1: Verificando carga de EmailJS...');
+            const step1 = typeof emailjs !== 'undefined';
+            diagnosticSteps.push(`1. EmailJS global: ${step1 ? '✅ Disponible' : '❌ No disponible'}`);
+            
+            // Paso 2: Verificar window.emailjs
+            console.log('Paso 2: Verificando window.emailjs...');
+            const step2 = typeof window.emailjs !== 'undefined';
+            diagnosticSteps.push(`2. window.emailjs: ${step2 ? '✅ Disponible' : '❌ No disponible'}`);
+            
+            // Paso 3: Verificar variable emailjsReady
+            console.log('Paso 3: Verificando estado interno...');
+            diagnosticSteps.push(`3. Sistema interno listo: ${emailjsReady ? '✅ Sí' : '❌ No'}`);
+            
+            // Paso 4: Verificar instancia guardada
+            console.log('Paso 4: Verificando instancia guardada...');
+            const step4 = !!window.emailjsInstance;
+            diagnosticSteps.push(`4. Instancia guardada: ${step4 ? '✅ Sí' : '❌ No'}`);
+            
+            // Paso 5: Verificar configuración
+            console.log('Paso 5: Verificando configuración...');
+            diagnosticSteps.push(`5. Public Key: ${CONFIG.publicKey ? '✅ Configurada' : '❌ Faltante'}`);
+            diagnosticSteps.push(`6. Service ID: ${CONFIG.serviceId ? '✅ Configurada' : '❌ Faltante'}`);
+            diagnosticSteps.push(`7. Template ID: ${CONFIG.templateId ? '✅ Configurada' : '❌ Faltante'}`);
+            
+            // Mostrar diagnóstico
+            const diagText = `🔍 DIAGNÓSTICO DETALLADO
+
+${diagnosticSteps.join('\n')}
+
+🔧 CREDENCIALES ACTUALES:
+• Public Key: ${CONFIG.publicKey}
+• Service ID: ${CONFIG.serviceId}  
+• Template ID: ${CONFIG.templateId}
+
+🌐 INFO TÉCNICA:
+• Navegador: ${navigator.userAgent.substring(0, 50)}...
+• Fecha/Hora: ${new Date().toLocaleString()}
+
+💡 RECOMENDACIÓN:
+${(step1 || step2) && emailjsReady ? 
+    '✅ Todo parece estar bien. Intenta enviar correo de prueba.' : 
+    '❌ Hay problemas. Intenta "Reintentar" o usa cliente local.'}`;
+
+            alert(diagText);
+            
+            // Log detallado en consola
+            console.log('=== DIAGNÓSTICO COMPLETO ===');
+            diagnosticSteps.forEach(step => console.log(step));
+            console.log('emailjsReady:', emailjsReady);
+            console.log('window.emailjsInstance:', window.emailjsInstance);
+            console.log('typeof emailjs:', typeof emailjs);
+            console.log('typeof window.emailjs:', typeof window.emailjs);
+            console.log('CONFIG:', CONFIG);
+            console.log('===============================');
+            
+            // Mostrar recomendación
+            if (!step1 && !step2) {
+                showAlert('error', '❌ EmailJS no se cargó. Verifica tu conexión a internet.');
+            } else if (!emailjsReady) {
+                showAlert('error', '❌ EmailJS cargado pero no inicializado. Problema con inicialización.');
+            } else {
+                showAlert('success', '✅ Diagnóstico completado. Revisa los detalles en el popup.');
+            }
+        }
+
+        // Función de prueba forzada (para debug)
+        async function forceTestEmail() {
+            console.log('🧪 PRUEBA FORZADA DE EMAIL...');
+            
+            const testEmail = prompt('📧 Email para prueba FORZADA:', 'test@gmail.com');
+            if (!testEmail) return;
+
+            // Intentar todos los métodos posibles
+            console.log('🔄 Intentando método 1: emailjs global...');
+            if (typeof emailjs !== 'undefined') {
+                try {
+                    const result = await emailjs.send(CONFIG.serviceId, CONFIG.templateId, {
+                        to_email: testEmail,
+                        subject: 'Prueba Forzada 1',
+                        message: 'Prueba usando emailjs global'
+                    });
+                    console.log('✅ Método 1 exitoso:', result);
+                    showAlert('success', '✅ Método 1 (emailjs global) funcionó!');
+                    return;
+                } catch (error) {
+                    console.log('❌ Método 1 falló:', error);
+                }
+            }
+
+            console.log('🔄 Intentando método 2: window.emailjs...');
+            if (typeof window.emailjs !== 'undefined') {
+                try {
+                    const result = await window.emailjs.send(CONFIG.serviceId, CONFIG.templateId, {
+                        to_email: testEmail,
+                        subject: 'Prueba Forzada 2',
+                        message: 'Prueba usando window.emailjs'
+                    });
+                    console.log('✅ Método 2 exitoso:', result);
+                    showAlert('success', '✅ Método 2 (window.emailjs) funcionó!');
+                    return;
+                } catch (error) {
+                    console.log('❌ Método 2 falló:', error);
+                }
+            }
+
+            console.log('🔄 Intentando método 3: instancia guardada...');
+            if (window.emailjsInstance) {
+                try {
+                    const result = await window.emailjsInstance.send(CONFIG.serviceId, CONFIG.templateId, {
+                        to_email: testEmail,
+                        subject: 'Prueba Forzada 3',
+                        message: 'Prueba usando instancia guardada'
+                    });
+                    console.log('✅ Método 3 exitoso:', result);
+                    showAlert('success', '✅ Método 3 (instancia guardada) funcionó!');
+                    return;
+                } catch (error) {
+                    console.log('❌ Método 3 falló:', error);
+                }
+            }
+
+            console.log('❌ Todos los métodos EmailJS fallaron, usando cliente local...');
+            sendLocalEmail(testEmail, '🧪 Prueba Forzada (Cliente Local)', 
+                'Todos los métodos de EmailJS fallaron, usando cliente local como respaldo.');
+        }
+
+        // Agregar al historial
+        function addToHistory(to, subject, method) {
+            emailHistory.push({
+                to: to,
+                subject: subject,
+                method: method,
+                date: new Date().toLocaleString()
+            });
+            updateHistory();
+        }
+
+        // Actualizar historial
+        function updateHistory() {
+            const historyDiv = document.getElementById('emailHistory');
+            let html = '';
+
+            if (emailHistory.length === 0) {
+                html = '<p>No hay correos enviados</p>';
+            } else {
+                emailHistory.forEach(email => {
+                    html += `
+                        <div class="history-item">
+                            <strong>📧 ${email.subject}</strong><br>
+                            <small>Para: ${email.to} • ${email.date} • ${email.method}</small>
+                        </div>
+                    `;
+                });
+            }
+            
+            historyDiv.innerHTML = html;
+        }
+
+        // Mostrar alerta
+        function showAlert(type, message) {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            document.querySelector('.container').insertBefore(alert, document.querySelector('.container').firstChild);
+            
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        // Reintentar EmailJS
+        function retryEmailJS() {
+            showAlert('info', '🔄 Reintentando cargar EmailJS...');
+            setTimeout(initEmailJS, 1000);
+        }
+
+        // Inicializar cuando se carga la página
+        window.addEventListener('load', function() {
+            console.log('🇬🇹 Sistema iniciado');
+            
+            // Mostrar estado de carga inmediatamente
+            updateStatus('loading', '🔄 Cargando EmailJS...', 'Verificando disponibilidad del servicio...');
+            
+            // Comenzar verificación inmediatamente
+            initEmailJS();
+        });
+
+        console.log('✅ Sistema de Auditoría Guatemala - Versión GitHub Pages');
+    </script>
+</body>
+</html>
