@@ -1045,27 +1045,61 @@
         async function addProduct() {
             const productData = {
                 empresa_id: currentCompany.id,
-                nombre_producto: document.getElementById('productName').value,
-                codigo_producto: document.getElementById('productCode').value,
-                categoria: document.getElementById('productCategory').value,
-                cantidad: parseInt(document.getElementById('productQuantity').value),
-                costo_unitario: parseFloat(document.getElementById('productCost').value),
-                precio_venta: parseFloat(document.getElementById('productPrice').value),
+                nombre_producto: document.getElementById('productName').value.trim(),
+                codigo_producto: document.getElementById('productCode').value.trim() || null,
+                categoria: document.getElementById('productCategory').value.trim() || null,
+                cantidad: parseInt(document.getElementById('productQuantity').value) || 0,
+                costo_unitario: parseFloat(document.getElementById('productCost').value) || 0,
+                precio_venta: parseFloat(document.getElementById('productPrice').value) || 0,
                 creado_por: currentUser.id
             };
 
-            if (!productData.nombre_producto || !productData.cantidad || !productData.costo_unitario || !productData.precio_venta) {
-                showAlert('Por favor completa todos los campos obligatorios', 'error');
+            // Validaciones mejoradas
+            if (!productData.nombre_producto) {
+                showAlert('El nombre del producto es obligatorio', 'error');
+                return;
+            }
+            if (productData.cantidad <= 0) {
+                showAlert('La cantidad debe ser mayor a 0', 'error');
+                return;
+            }
+            if (productData.costo_unitario <= 0) {
+                showAlert('El costo unitario debe ser mayor a 0', 'error');
+                return;
+            }
+            if (productData.precio_venta <= 0) {
+                showAlert('El precio de venta debe ser mayor a 0', 'error');
                 return;
             }
 
+            console.log('Datos del producto a insertar:', productData);
+
             try {
+                // Verificar conexión con Supabase
+                const { data: testConnection } = await supabase
+                    .from('empresas')
+                    .select('id')
+                    .eq('id', currentCompany.id)
+                    .single();
+
+                if (!testConnection) {
+                    throw new Error('No se puede conectar con la base de datos');
+                }
+
+                console.log('Conexión con Supabase verificada');
+
+                // Insertar producto
                 const { data, error } = await supabase
                     .from('inventarios')
                     .insert([productData])
                     .select();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('Error de Supabase:', error);
+                    throw error;
+                }
+
+                console.log('Producto insertado exitosamente:', data);
 
                 await updateInventoryGrid();
                 await updateDashboard();
@@ -1076,8 +1110,18 @@
                 await registrarActividad('CREAR_PRODUCTO', `Producto creado: ${productData.nombre_producto}`);
 
             } catch (error) {
-                console.error('Error agregando producto:', error);
-                showAlert('Error agregando producto: ' + error.message, 'error');
+                console.error('Error completo:', error);
+                
+                // Mensajes de error más específicos
+                if (error.message.includes('Failed to fetch')) {
+                    showAlert('Error de conexión. Verifica tu internet y la configuración de Supabase.', 'error');
+                } else if (error.code === '23505') {
+                    showAlert('Ya existe un producto con ese código', 'error');
+                } else if (error.code === '23503') {
+                    showAlert('Error de referencia en la base de datos', 'error');
+                } else {
+                    showAlert('Error agregando producto: ' + (error.message || 'Error desconocido'), 'error');
+                }
             }
         }
 
